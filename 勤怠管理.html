@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+</head>
+<style>
+    .loading {
+        display: none;
+        /* Initially hidden */
+        text-align: center;
+        padding: 20px;
+    }
+
+    .result {
+        display: none;
+        /* Initially hidden */
+    }
+</style>
+
+<body style="margin: 25px;">
+    <div class="loading" id="loading">
+        <div class="mdl-spinner mdl-js-spinner is-active"></div>
+        <p>処理中です...</p>
+    </div>
+    <div class="result" id="result">
+        <p>処理結果:</p>
+        <p id="output"></p>
+    </div>
+
+    処理日時<input id="execDate" name="date" type="date" value="yyyy-mm-dd" />
+    <br>
+    <textarea id="myTextarea" rows="30" cols="80"></textarea>
+    <br>
+    <button onclick="sendData()">送信</button>
+
+    <script>
+        $('input[type=date]').on('focus', function () {
+            $('#placeholder').hide();
+        }).on('blur', function () {
+            var val = $(this).val();
+            if (!val) {
+                $('#placeholder').show();
+            }
+        });
+
+        function sendData() {
+            const textareaValue = document.getElementById('myTextarea').value;
+            const execDate = document.getElementById('execDate').value;
+
+            document.getElementById('loading').style.display = 'block';
+
+            google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure)
+                .processData(textareaValue, execDate);
+        }
+
+        function onSuccess(output) {
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerText = "保存しました";
+
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function onFailure(error) {
+            document.getElementById('result').innerText = 'エラーが発生しました: ' + error.message;
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>
