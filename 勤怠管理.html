@@ -30,6 +30,16 @@
 
     処理日時<input id="execDate" name="date" type="date" value="yyyy-mm-dd" />
     <br>
+    <div style="margin: 25px;">textareaにコピペするのは誰か？(「自分」は誰か？)<br>
+        <label><input type="radio" name="radioGroup" value="0"> 吉村</label><br>
+        <label><input type="radio" name="radioGroup" value="1"> 服部</label><br>
+        <label><input type="radio" name="radioGroup" value="2"> 相田</label><br>
+        <label><input type="radio" name="radioGroup" value="3"> 斎藤</label><br>
+        <label><input type="radio" name="radioGroup" value="4"> 佐藤</label><br>
+        <label><input type="radio" name="radioGroup" value="5"> 周</label><br>
+        <label><input type="radio" name="radioGroup" value="6"> 北村</label><br>
+        <label><input type="radio" name="radioGroup" value="7"> 葵</label><br>
+    </div>
     <textarea id="myTextarea" rows="30" cols="80"></textarea>
     <br>
     <button onclick="sendData()">送信</button>
@@ -47,13 +57,14 @@
         function sendData() {
             const textareaValue = document.getElementById('myTextarea').value;
             const execDate = document.getElementById('execDate').value;
+            const operator = document.querySelector('input[name="radioGroup"]:checked').value;
 
             document.getElementById('loading').style.display = 'block';
 
             google.script.run
                 .withSuccessHandler(onSuccess)
                 .withFailureHandler(onFailure)
-                .processData(textareaValue, execDate);
+                .processData(textareaValue, execDate, operator);
         }
 
         function onSuccess(output) {

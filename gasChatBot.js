@@ -1,6 +1,6 @@
 function doGet() {
   const htmlOutput = HtmlService.createHtmlOutputFromFile('勤怠管理')
-    .setTitle('GAS ボタンと Textarea');
+    .setTitle('チャットから取得のbot化');
   htmlOutput.append("<script>showLoading();</script>");
   return htmlOutput;
 }
@@ -9,7 +9,7 @@ var globalExecDate = "";
 var globalName = "";
 var globalNamePos = "";
 
-function processData(data, execDate) {
+function processData(data, execDate, operator) {
   globalExecDate = execDate.replace(/-/g, '/');
   const processedData = data.split("\n");
 
@@ -50,7 +50,23 @@ function processData(data, execDate) {
       } else if (globalName.includes('葵')) {
         globalNamePos = 7;
       } else if (globalName.includes('自分')) {
-        globalNamePos = 8;
+        if (operator == "0") {
+          globalNamePos = 0;
+        } else if (operator == "1") {
+          globalNamePos = 1;
+        } else if (operator == "2") {
+          globalNamePos = 2;
+        } else if (operator == "3") {
+          globalNamePos = 3;
+        } else if (operator == "4") {
+          globalNamePos = 4;
+        } else if (operator == "5") {
+          globalNamePos = 5;
+        } else if (operator == "6") {
+          globalNamePos = 6;
+        } else if (operator == "7") {
+          globalNamePos = 7;
+        }
       }
 
       var realTime = c1[1].slice(-5).trim();
@@ -142,55 +158,10 @@ function execSpreadSheet(userData) {
 // doPostの呼び出し
 function processDataTest() {
 
-  let data = `周梓誠, 金 18:09
-勤務終了いたします。
-【終了時刻】18:00
-【終了場所】川崎
-【Canbus. 】投入済み
-【  セキュリティカード  】持ち帰ります
-
-佐藤光, 金 18:18
-勤務終了いたします。
-【終了時刻】18:00
-【終了場所】川崎
-【Canbus. 】投入済み
-【  セキュリティカード  】持ち帰ります
-
-服部亜希, 金 18:47
-勤務終了いたします。
-【終了時刻】18:30
-【終了場所】川崎
-【Canbus. 】投入済み
-【  セキュリティカード  】持ち帰ります
-
-齊藤秦平, 金 19:04
-勤務終了いたします。
-【終了時刻】18:00
-【終了場所】川崎
-【Canbus. 】投入済み
-【  セキュリティカード  】持ち帰ります
-
-相田羽遥, 金 19:04
-勤務終了いたします。
-【終了時刻】18:30
-【終了場所】川崎
-【Canbus. 】投入済み
-【  セキュリティカード  】持ち帰ります
-
-北村美沙, 金 19:32
-勤務終了いたします。
-【終了時刻】19:30
-【終了場所】在宅
-【Canbus. 】投入済
-
-吉村美鈴, 金 19:39
-勤務終了いたします。
-【終了時刻】19:30
-【終了場所】川崎
-【Canbus. 】投入済み
-【  セキュリティカード  】持ち帰ります
+  let data = `
 `
 
-  let execDate = "2025-07-23"
-  processData(data, execDate);
+  let execDate = "2025-07-23";
+  let operator = "7";
+  processData(data, execDate, operator);
 }
