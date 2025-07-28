@@ -20,7 +20,7 @@ function processData(data, execDate, operator) {
 
   processedData.forEach(function (key) {
 
-    if (key.includes('吉村')
+    if ((key.includes('吉村')
       || key.includes('服部')
       || key.includes('相田')
       || key.includes('齊藤')
@@ -28,7 +28,7 @@ function processData(data, execDate, operator) {
       || key.includes('周')
       || key.includes('北村')
       || key.includes('葵')
-      || key.includes('自分')) {
+      || key.includes('自分')) && nextFlag == false) {
 
       var c1 = key.split(",");
       globalName = c1[0];
@@ -161,7 +161,7 @@ function processDataTest() {
   let data = `
 `
 
-  let execDate = "2025-07-23";
+  let execDate = "2025-07-25";
   let operator = "7";
   processData(data, execDate, operator);
 }
