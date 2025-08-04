@@ -19,6 +19,7 @@ function processData(data, execDate, operator) {
   var counLine = 0;
 
   processedData.forEach(function (key) {
+    key = key.replace(', 編集済み', '');
 
     if ((key.includes('吉村')
       || key.includes('服部')
@@ -31,6 +32,7 @@ function processData(data, execDate, operator) {
       || key.includes('自分')) && nextFlag == false) {
 
       var c1 = key.split(",");
+      var c1Len = c1.length;
       globalName = c1[0];
       userData.set('name', globalName);
       if (globalName.includes('吉村')) {
@@ -69,38 +71,54 @@ function processData(data, execDate, operator) {
         }
       }
 
-      var realTime = c1[1].slice(-5).trim();
+      if (c1Len > 1) {
+        var realTime = "";
+        if (c1Len > 2) {
+          realTime = c1[2].slice(-5).trim();
+        } else {
+          realTime = c1[1].slice(-5).trim();
+        }
+        userData.set('実際時間', realTime);
+        nextFlag = true;
+        counLine = 1;
+      }
 
-      userData.set('実際時間', realTime);
-      nextFlag = true;
-      counLine = 5;
-    } else if (nextFlag == true) {
-      if (key.includes('開始時刻')
-        || key.includes('終了時刻')
-      ) {
+    } else if (nextFlag == true && counLine >= 1 && key != "") {
+      if (key.includes('開始時刻') || key.includes('終了時刻')) {
         var dakokuTime = key.slice(-5).trim();
         if (key.includes('開始時刻')) {
           userData.set('開始時刻', dakokuTime);
         } else {
           userData.set('終了時刻', dakokuTime);
         }
-        counLine--;
-      } else if (key.includes('開始場所')
-        || key.includes('終了場所')
-      ) {
+        counLine = 2;
+      } else if (key.includes('開始場所') || key.includes('終了場所')) {
         var place = key.replace('【開始場所】', '').replace('【終了場所】', '')
         if (key.includes('開始場所')) {
           userData.set('開始場所', place);
         } else {
           userData.set('終了場所', place);
         }
-        counLine--;
+        counLine = 3;
         nextFlag = false;
+      } else if (key.includes('@')) {
+        userData.clear();
+        nextFlag = false
+        counLine = 0;
       }
+    } else if (key == "" && counLine >= 1 && userData.size <= 3) {
+      userData.clear();
+      nextFlag = false
+      counLine = 0;
     } else {
       if (userData.size >= 3 && globalNamePos != -1) {
         execSpreadSheet(userData);
         globalNamePos = -1;
+      }
+      else {
+        userData.clear();
+        nextFlag = false
+        counLine = 0;
       }
     }
   });
@@ -161,7 +179,7 @@ function processDataTest() {
   let data = `
 `
 
-  let execDate = "2025-07-25";
+  let execDate = "2025-08-01";
   let operator = "7";
   processData(data, execDate, operator);
 }
