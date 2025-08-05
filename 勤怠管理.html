@@ -16,6 +16,10 @@
         display: none;
         /* Initially hidden */
     }
+
+    #spreadsheetID {
+        width: 920px;
+    }
 </style>
 
 <body style="margin: 25px;">
@@ -43,8 +47,10 @@
     <textarea id="myTextarea" rows="30" cols="80"></textarea>
     <br>
     <button onclick="sendData()">送信</button>
-    <a href="https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?gid=0#gid=0"
-        target="_blank">スプレッドシートを別タブで開く</a>
+    <input type="text" id="spreadsheetID" name="spreadsheetID"
+        value="https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing">
+    <button onclick="openSpreadsheet();">別タブでスプレッドシートを開く</button>
+
     <script>
         $('input[type=date]').on('focus', function () {
             $('#placeholder').hide();
@@ -59,13 +65,14 @@
             const textareaValue = document.getElementById('myTextarea').value;
             const execDate = document.getElementById('execDate').value;
             const operator = document.querySelector('input[name="radioGroup"]:checked').value;
+            const spreadsheetUrlInput = document.getElementById('spreadsheetID').value;
 
             document.getElementById('loading').style.display = 'block';
 
             google.script.run
                 .withSuccessHandler(onSuccess)
                 .withFailureHandler(onFailure)
-                .processData(textareaValue, execDate, operator);
+                .processData(textareaValue, execDate, operator, spreadsheetUrlInput);
         }
 
         function onSuccess(output) {
@@ -79,6 +86,17 @@
             document.getElementById('result').innerText = 'エラーが発生しました: ' + error.message;
             document.getElementById('result').style.display = 'block';
             document.getElementById('loading').style.display = 'none';
+        }
+
+        function openSpreadsheet() {
+            let spreadsheetUrl = document.getElementById('spreadsheetID').value;
+            const link = document.createElement("a");
+            link.href = spreadsheetUrl;
+            link.target = "_blank";
+            link.style.display = "none"; // <a>タグを非表示にする
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // 不要になったら削除
         }
     </script>
 </body>

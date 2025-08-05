@@ -54,17 +54,19 @@ function isWeekendOrHoliday(targetDate) {
   }
 
   // 祝日判定
-  const calendar = CalendarApp.getCalendarById('ja.japanese#holiday@group.v.calendar.google.com');
+  // 参考：https://zenn.dev/gas/articles/f052a8ecb242e4
+  const calendar = CalendarApp.getCalendarById('ja.japanese.official#holiday@group.v.calendar.google.com');
   const events = calendar.getEventsForDay(targetDate);
   if (events.length > 0) {
     return 10;
   }
-  return 0;
+  return day;
 }
 
-function processData(data, execDate, operator) {
+function processData(data, execDate, operator, spreadsheetUrlInput) {
   execDate = execDate.replace(/-/g, '/');
   const processedData = data.split("\n");
+  spreadSheetUrl = spreadsheetUrlInput;
 
   var userData = new Map();
   var nextFlag = false;
@@ -258,7 +260,8 @@ function processDataTest() {
   let data = `
 `
 
-  let execDate = "2025-07-14";
+  let execDate = "2025-07-01";
   let operator = "7";
-  processData(data, execDate, operator);
+  spreadsheetUrl = "https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing";
+  processData(data, execDate, operator, spreadsheetUrl);
 }
