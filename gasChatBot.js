@@ -8,15 +8,74 @@ function doGet() {
 var globalExecDate = "";
 var globalName = "";
 var globalNamePos = "";
+var spreadSheetUrl = "https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing"
+var dateInstance;
+
+function dateInstanceToDateStr(dateInstance) {
+  var dateStr = Utilities.formatDate(dateInstance, 'JST', 'yyyy/MM/dd');
+  return dateStr;
+}
+
+function dayOfWeekToKanji(targetDate) {
+  const dayOfWeek = targetDate.getDay();
+  let dayOfWeekStr = "";
+
+  switch (dayOfWeek) {
+    case 0:
+      dayOfWeekStr = "日";
+      break;
+    case 1:
+      dayOfWeekStr = "月";
+      break;
+    case 2:
+      dayOfWeekStr = "火";
+      break;
+    case 3:
+      dayOfWeekStr = "水";
+      break;
+    case 4:
+      dayOfWeekStr = "木";
+      break;
+    case 5:
+      dayOfWeekStr = "金";
+      break;
+    case 6:
+      dayOfWeekStr = "土";
+      break;
+  }
+  return dayOfWeekStr;
+}
+
+function isWeekendOrHoliday(targetDate) {
+  // 土日判定
+  const day = targetDate.getDay();
+  if (day === 0 || day === 6) {
+    return day;
+  }
+
+  // 祝日判定
+  const calendar = CalendarApp.getCalendarById('ja.japanese#holiday@group.v.calendar.google.com');
+  const events = calendar.getEventsForDay(targetDate);
+  if (events.length > 0) {
+    return 10;
+  }
+  return 0;
+}
 
 function processData(data, execDate, operator) {
-  globalExecDate = execDate.replace(/-/g, '/');
+  execDate = execDate.replace(/-/g, '/');
   const processedData = data.split("\n");
 
   var userData = new Map();
-  // var name = "";
   var nextFlag = false;
   var counLine = 0;
+  var ampm = 0;
+  dateInstance = new Date();
+
+  const result = execDate.match(/(\d+)\/(\d+)\/(\d+)/);
+  // 開始日時を作成
+  dateInstance = new Date(Number(result[1]), Number(result[2]) - 1, Number(result[3]));
+  globalExecDate = dateInstanceToDateStr(dateInstance);
 
   processedData.forEach(function (key) {
     key = key.replace(', 編集済み', '');
@@ -88,16 +147,37 @@ function processData(data, execDate, operator) {
         var dakokuTime = key.slice(-5).trim();
         if (key.includes('開始時刻')) {
           userData.set('開始時刻', dakokuTime);
+          if (ampm == 1) {
+            dateInstance.setDate(dateInstance.getDate() + 1);
+            // 次の日が何曜日か、または祝日か確認
+            var dayOfWeek = isWeekendOrHoliday(dateInstance);
+            if (dayOfWeek == 6) {
+              dateInstance.setDate(dateInstance.getDate() + 2);
+            }
+            dayOfWeek = isWeekendOrHoliday(dateInstance);
+            if (dayOfWeek == 10) {
+              dateInstance.setDate(dateInstance.getDate() + 1);
+            }
+            globalExecDate = dateInstanceToDateStr(dateInstance);
+          }
+          ampm = 0;
         } else {
           userData.set('終了時刻', dakokuTime);
+          ampm = 1;
         }
         counLine = 2;
       } else if (key.includes('開始場所') || key.includes('終了場所')) {
         var place = key.replace('【開始場所】', '').replace('【終了場所】', '')
         if (key.includes('開始場所')) {
           userData.set('開始場所', place);
+          if (ampm == 1) {
+            dateInstance.setDate(dateInstance.getDate() + 1);
+            globalExecDate = dateInstanceToDateStr(dateInstance);
+          }
+          ampm = 0;
         } else {
           userData.set('終了場所', place);
+          ampm = 1;
         }
         counLine = 3;
         nextFlag = false;
@@ -123,13 +203,11 @@ function processData(data, execDate, operator) {
     }
   });
 
-  // 処理完了後にローディング表示を非表示
-  // const finalHtmlOutput = HtmlOutput.append("<script>document.getElementById('loading').style.display = 'none';</script>");
   return 200;
 }
 
 function execSpreadSheet(userData) {
-  var spreadSheet = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing");
+  var spreadSheet = SpreadsheetApp.openByUrl(spreadSheetUrl);
   let sheet = spreadSheet.getSheetByName("シート1")
 
   //対象となるシートの最終行を取得
@@ -158,6 +236,7 @@ function execSpreadSheet(userData) {
   if (executed == false) {
     var i = lastRow + 1;
     sheet.getRange(i, 1).setValue(globalExecDate);
+    sheet.getRange(i, 2).setValue(dayOfWeekToKanji(dateInstance));
 
     if (userData.has("開始時刻")) {
       sheet.getRange(i, 3).setValue("開始");
@@ -179,7 +258,7 @@ function processDataTest() {
   let data = `
 `
 
-  let execDate = "2025-08-01";
+  let execDate = "2025-07-14";
   let operator = "7";
   processData(data, execDate, operator);
 }
