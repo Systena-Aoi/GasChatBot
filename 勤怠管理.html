@@ -26,39 +26,125 @@
     #spreadsheetID {
         width: 920px;
     }
+
+    .tab {
+        display: flex;
+        flex-flow: wrap;
+    }
+
+    .tab-item {
+        display: block;
+        flex-grow: 1;
+        text-align: center;
+        padding: 10px 0;
+        cursor: pointer;
+        order: -1;
+        /* タブメニューは一番上に表示する */
+
+        /* 下線以外をつける */
+        border-top: 1px solid skyblue;
+        border-left: 1px solid skyblue;
+        border-right: 1px solid skyblue;
+    }
+
+    .tab-item:not(:first-of-type) {
+        border-left: none;
+    }
+
+    /* アクティブなタブの背景色と文字色を変える */
+    .tab-input:checked+.tab-item {
+        background: skyblue;
+        color: black;
+    }
+
+    /* コンテンツは原則非表示 */
+    .tab-content {
+        width: 100%;
+        min-width: 1500px;
+        height: 600px;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid skyblue;
+        padding: 15px;
+        overflow-y: scroll;
+    }
+
+    /* ラジオボタンがチェックされているコンテンツだけは表示 */
+    .tab-input:not(:checked)+.tab-item+.tab-content {
+        display: none;
+    }
+
+    .tab-input {
+        display: none;
+    }
+
+    img {
+        border: 3px skyblue solid;
+        margin-right: 20px;
+    }
 </style>
 
 <body>
-    <div class="loading" id="loading">
-        <div class="mdl-spinner mdl-js-spinner is-active"></div>
-        <p>処理中です...</p>
-    </div>
-    <div class="result" id="result">
-        <p>処理結果:</p>
-        <p id="output"></p>
-    </div>
+    <div class="tab">
+        <!-- 初期状態で表示されるコンテンツに対応するラジオボタンにはchecked="checkedを設定する -->
+        <input id="menu1" class="tab-input" name="menu" type="radio" checked="checked">
+        <label for="menu1" class="tab-item">勤怠管理</label>
+        <div class="tab-content">
+            <div class="loading" id="loading">
+                <div class="mdl-spinner mdl-js-spinner is-active"></div>
+                <p>処理中です...</p>
+            </div>
+            <div class="result" id="result">
+                <p>処理結果:</p>
+                <p id="output"></p>
+            </div>
 
-    <div class="radioWhoExec">textareaにコピペするのは誰か？(「自分」は誰か？)<br>
-        <label><input type="radio" name="radioGroup" value="0"> 吉村</label><br>
-        <label><input type="radio" name="radioGroup" value="1"> 服部</label><br>
-        <label><input type="radio" name="radioGroup" value="2"> 相田</label><br>
-        <label><input type="radio" name="radioGroup" value="3"> 斎藤</label><br>
-        <label><input type="radio" name="radioGroup" value="4"> 佐藤</label><br>
-        <label><input type="radio" name="radioGroup" value="5"> 周</label><br>
-        <label><input type="radio" name="radioGroup" value="6"> 北村</label><br>
-        <label><input type="radio" name="radioGroup" value="7"> 葵</label>
+            <div class="radioWhoExec">textareaにコピペするのは誰か？(「自分」は誰か？)<br>
+                <label><input type="radio" name="radioGroup" value="0"> 吉村</label><br>
+                <label><input type="radio" name="radioGroup" value="1"> 服部</label><br>
+                <label><input type="radio" name="radioGroup" value="2"> 相田</label><br>
+                <label><input type="radio" name="radioGroup" value="3"> 斎藤</label><br>
+                <label><input type="radio" name="radioGroup" value="4"> 佐藤</label><br>
+                <label><input type="radio" name="radioGroup" value="5"> 周</label><br>
+                <label><input type="radio" name="radioGroup" value="6"> 北村</label><br>
+                <label><input type="radio" name="radioGroup" value="7"> 葵</label>
+            </div>
+            処理開始日時<input id="execDate" name="date" type="date" value="yyyy-mm-dd" />
+            <br>
+            <textarea id="myTextarea" rows="15" cols="80"></textarea>
+            <br>
+            <button onclick="sendData()">送信</button>
+            <br>
+            <input type="text" id="spreadsheetID" name="spreadsheetID" value=<?=spreadSheet ?>>
+            <button onclick="openSpreadsheet();">スプレッドシートを別タブで開く</button>
+            <br>
+            <a href="https://docs.google.com/spreadsheets/d/1CQAwp87w_WYyJxCEWSJvcUT8H_-zftKRgERLarko3sQ/edit?usp=sharing"
+                target="_blank">bot化歴代シートを別タブで開く</a>
+        </div>
+
+        <input id="menu2" class="tab-input" name="menu" type="radio">
+        <label for="menu2" class="tab-item">使い方</label>
+        <div class="tab-content">
+            <img src="https://lh3.googleusercontent.com/d/1DMij8mvVgy4DUypUT21RAIOZdjLLcmiF" width="640px"
+                style="vertical-align: top;">
+            <img src="https://lh3.googleusercontent.com/d/1VBKM3FKB9ezAmutzf6MMV4EuqJ8rHNRR" width="640px">
+            <ul>
+                <li>①　urlにパラメータが無い場合は、②に「bot化歴代シート」の最新勤怠シートurlが表示されます。<br>
+                    　　パラメータを設定する場合は、<br>
+                    　　①のurl『https://script.google.com/a/macros/systena.co.jp/s/AKfycbzFfG_M0XOvXHvqu0Wguayur1Iic-5pXRBhZVWsNbHN/dev』の後ろに<br>
+                    　　『?spreadSheet=』を追加し、更新したいスプレッドシートの共有リンクを設定してください。</li>
+                <li>②　勤怠を更新するスプレッドシートの共有リンクを設定してください。</li>
+                <li>③　②で設定されたスプレッドシートを別タブで開きます。</li>
+                <li>④　bot化歴代シートを別タブで開きます。</li>
+                <li>⑤　操作する人を選択してください。<br>
+                    　　注意：選択を誤ったまま処理をした場合、スプレッドシートが更新され、復旧出来ません。</li>
+                <li>⑥　更新する勤怠の開始日を設定してください。<br>
+                    　　注意：選択を誤ったまま処理をした場合、スプレッドシートが更新され、復旧出来ません。</li>
+                <li>⑦　勤怠のグループチャットから、更新する文字列をコピーし、⑦へ貼る。</li>
+                <li>⑧　⑦で設定した値をGASへ『送信』します。</li>
+            </ul>
+        </div>
     </div>
-    処理開始日時<input id="execDate" name="date" type="date" value="yyyy-mm-dd" />
-    <br>
-    <textarea id="myTextarea" rows="15" cols="80"></textarea>
-    <br>
-    <button onclick="sendData()">送信</button>
-    <br>
-    <input type="text" id="spreadsheetID" name="spreadsheetID" value=<?=spreadSheet ?>>
-    <button onclick="openSpreadsheet();">スプレッドシートを別タブで開く</button>
-    <br>
-    <a href="https://docs.google.com/spreadsheets/d/1CQAwp87w_WYyJxCEWSJvcUT8H_-zftKRgERLarko3sQ/edit?usp=sharing"
-        target="_blank">bot化歴代シートを別タブで開く</a>
 
     <script>
         $('input[type=date]').on('focus', function () {
