@@ -1,72 +1,46 @@
-function doGet() {
-  const htmlOutput = HtmlService.createHtmlOutputFromFile('勤怠管理')
-    .setTitle('チャットから取得のbot化');
-  htmlOutput.append("<script>showLoading();</script>");
-  return htmlOutput;
-}
-
 var globalExecDate = "";
 var globalName = "";
 var globalNamePos = "";
-var spreadSheetUrl = "https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing"
 var dateInstance;
+var spreadSheetDefault = "https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing"
 
-function dateInstanceToDateStr(dateInstance) {
-  var dateStr = Utilities.formatDate(dateInstance, 'JST', 'yyyy/MM/dd');
-  return dateStr;
-}
+// bot化歴代シート
+var generationSheetUrl = "https://docs.google.com/spreadsheets/d/1CQAwp87w_WYyJxCEWSJvcUT8H_-zftKRgERLarko3sQ/edit?usp=sharing"
 
-function dayOfWeekToKanji(targetDate) {
-  const dayOfWeek = targetDate.getDay();
-  let dayOfWeekStr = "";
+// 勤怠シート
+var spreadSheetAttendance = "";
 
-  switch (dayOfWeek) {
-    case 0:
-      dayOfWeekStr = "日";
-      break;
-    case 1:
-      dayOfWeekStr = "月";
-      break;
-    case 2:
-      dayOfWeekStr = "火";
-      break;
-    case 3:
-      dayOfWeekStr = "水";
-      break;
-    case 4:
-      dayOfWeekStr = "木";
-      break;
-    case 5:
-      dayOfWeekStr = "金";
-      break;
-    case 6:
-      dayOfWeekStr = "土";
-      break;
-  }
-  return dayOfWeekStr;
-}
+function doGet(e) {
 
-function isWeekendOrHoliday(targetDate) {
-  // 土日判定
-  const day = targetDate.getDay();
-  if (day === 0 || day === 6) {
-    return day;
+  var spreadSheet = "";
+
+  if (e && e.parameter && e.parameter.hasOwnProperty('spreadSheet')) {
+    spreadSheet = e.parameter.spreadSheet;
+    if (spreadSheet === "") {
+      spreadSheet = getNewSheet();
+    }
+  } else {
+    spreadSheet = getNewSheet();
   }
 
-  // 祝日判定
-  // 参考：https://zenn.dev/gas/articles/f052a8ecb242e4
-  const calendar = CalendarApp.getCalendarById('ja.japanese.official#holiday@group.v.calendar.google.com');
-  const events = calendar.getEventsForDay(targetDate);
-  if (events.length > 0) {
-    return 10;
-  }
-  return day;
+  var template = HtmlService.createTemplateFromFile('勤怠管理');
+  template.spreadSheet = spreadSheet;
+
+  const htmlOutput = template.evaluate();
+  htmlOutput.setTitle('チャットから取得のbot化');
+  return htmlOutput;
 }
 
-function processData(data, execDate, operator, spreadsheetUrlInput) {
+function processData(data, execDate, operator, spreadsheetFromFront) {
   execDate = execDate.replace(/-/g, '/');
   const processedData = data.split("\n");
-  spreadSheetUrl = spreadsheetUrlInput;
+
+  // フロントで設定された勤怠シートが、歴代シートに存在しているかチェック
+  // 存在していなければ、保存する
+  checkGenerationSheet(spreadsheetFromFront);
+
+  // 勤怠シート
+  spreadSheetAttendance = spreadsheetFromFront;
 
   var userData = new Map();
   var nextFlag = false;
@@ -208,8 +182,37 @@ function processData(data, execDate, operator, spreadsheetUrlInput) {
   return 200;
 }
 
+function getNewSheet() {
+  var spreadSheet = SpreadsheetApp.openByUrl(generationSheetUrl);
+  let sheet = spreadSheet.getSheetByName("シート1")
+  //対象となるシートの最終行を取得
+  var lastRow = sheet.getDataRange().getLastRow();
+  var rowValue = sheet.getRange(lastRow, 2).getDisplayValue();
+  return rowValue;
+}
+
+function checkGenerationSheet(spreadsheetFromFront) {
+  var spreadSheet = SpreadsheetApp.openByUrl(generationSheetUrl);
+  let sheet = spreadSheet.getSheetByName("シート1")
+  //対象となるシートの最終行を取得
+  var lastRow = sheet.getDataRange().getLastRow();
+
+  var hasGenerationSheet = false;
+  for (var i = 1; i <= lastRow; i++) {
+    var rowValue = sheet.getRange(i, 2).getDisplayValue();
+    if (rowValue == spreadsheetFromFront) {
+      hasGenerationSheet = true;
+      break;
+    }
+  }
+
+  if (hasGenerationSheet == false) {
+    sheet.getRange(lastRow + 1, 2).setValue(spreadsheetFromFront);
+  }
+}
+
 function execSpreadSheet(userData) {
-  var spreadSheet = SpreadsheetApp.openByUrl(spreadSheetUrl);
+  var spreadSheet = SpreadsheetApp.openByUrl(spreadSheetAttendance);
   let sheet = spreadSheet.getSheetByName("シート1")
 
   //対象となるシートの最終行を取得
@@ -254,6 +257,58 @@ function execSpreadSheet(userData) {
   }
 }
 
+function dateInstanceToDateStr(dateInstance) {
+  var dateStr = Utilities.formatDate(dateInstance, 'JST', 'yyyy/MM/dd');
+  return dateStr;
+}
+
+function dayOfWeekToKanji(targetDate) {
+  const dayOfWeek = targetDate.getDay();
+  let dayOfWeekStr = "";
+
+  switch (dayOfWeek) {
+    case 0:
+      dayOfWeekStr = "日";
+      break;
+    case 1:
+      dayOfWeekStr = "月";
+      break;
+    case 2:
+      dayOfWeekStr = "火";
+      break;
+    case 3:
+      dayOfWeekStr = "水";
+      break;
+    case 4:
+      dayOfWeekStr = "木";
+      break;
+    case 5:
+      dayOfWeekStr = "金";
+      break;
+    case 6:
+      dayOfWeekStr = "土";
+      break;
+  }
+  return dayOfWeekStr;
+}
+
+function isWeekendOrHoliday(targetDate) {
+  // 土日判定
+  const day = targetDate.getDay();
+  if (day === 0 || day === 6) {
+    return day;
+  }
+
+  // 祝日判定
+  // 参考：https://zenn.dev/gas/articles/f052a8ecb242e4
+  const calendar = CalendarApp.getCalendarById('ja.japanese.official#holiday@group.v.calendar.google.com');
+  const events = calendar.getEventsForDay(targetDate);
+  if (events.length > 0) {
+    return 10;
+  }
+  return day;
+}
+
 // doPostの呼び出し
 function processDataTest() {
 
@@ -262,6 +317,6 @@ function processDataTest() {
 
   let execDate = "2025-07-01";
   let operator = "7";
-  spreadsheetUrl = "https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing";
-  processData(data, execDate, operator, spreadsheetUrl);
+  spreadsheetUrlInput = spreadSheetDefault;
+  processData(data, execDate, operator, spreadsheetUrlInput);
 }

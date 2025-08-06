@@ -5,16 +5,22 @@
     <base target="_top">
 </head>
 <style>
+    body {
+        margin: 25px;
+    }
+
     .loading {
         display: none;
-        /* Initially hidden */
         text-align: center;
         padding: 20px;
     }
 
     .result {
         display: none;
-        /* Initially hidden */
+    }
+
+    .radioWhoExec {
+        margin: 10px;
     }
 
     #spreadsheetID {
@@ -22,7 +28,7 @@
     }
 </style>
 
-<body style="margin: 25px;">
+<body>
     <div class="loading" id="loading">
         <div class="mdl-spinner mdl-js-spinner is-active"></div>
         <p>処理中です...</p>
@@ -32,9 +38,7 @@
         <p id="output"></p>
     </div>
 
-    処理開始日時<input id="execDate" name="date" type="date" value="yyyy-mm-dd" />
-    <br>
-    <div style="margin: 25px;">textareaにコピペするのは誰か？(「自分」は誰か？)<br>
+    <div class="radioWhoExec">textareaにコピペするのは誰か？(「自分」は誰か？)<br>
         <label><input type="radio" name="radioGroup" value="0"> 吉村</label><br>
         <label><input type="radio" name="radioGroup" value="1"> 服部</label><br>
         <label><input type="radio" name="radioGroup" value="2"> 相田</label><br>
@@ -42,14 +46,19 @@
         <label><input type="radio" name="radioGroup" value="4"> 佐藤</label><br>
         <label><input type="radio" name="radioGroup" value="5"> 周</label><br>
         <label><input type="radio" name="radioGroup" value="6"> 北村</label><br>
-        <label><input type="radio" name="radioGroup" value="7"> 葵</label><br>
+        <label><input type="radio" name="radioGroup" value="7"> 葵</label>
     </div>
-    <textarea id="myTextarea" rows="30" cols="80"></textarea>
+    処理開始日時<input id="execDate" name="date" type="date" value="yyyy-mm-dd" />
+    <br>
+    <textarea id="myTextarea" rows="15" cols="80"></textarea>
     <br>
     <button onclick="sendData()">送信</button>
-    <input type="text" id="spreadsheetID" name="spreadsheetID"
-        value="https://docs.google.com/spreadsheets/d/1oo_PaBrRj5BxeRPnDwl2cNfviPPOj35dDFB59c2P-Fw/edit?usp=sharing">
-    <button onclick="openSpreadsheet();">別タブでスプレッドシートを開く</button>
+    <br>
+    <input type="text" id="spreadsheetID" name="spreadsheetID" value=<?=spreadSheet ?>>
+    <button onclick="openSpreadsheet();">スプレッドシートを別タブで開く</button>
+    <br>
+    <a href="https://docs.google.com/spreadsheets/d/1CQAwp87w_WYyJxCEWSJvcUT8H_-zftKRgERLarko3sQ/edit?usp=sharing"
+        target="_blank">bot化歴代シートを別タブで開く</a>
 
     <script>
         $('input[type=date]').on('focus', function () {
@@ -65,14 +74,14 @@
             const textareaValue = document.getElementById('myTextarea').value;
             const execDate = document.getElementById('execDate').value;
             const operator = document.querySelector('input[name="radioGroup"]:checked').value;
-            const spreadsheetUrlInput = document.getElementById('spreadsheetID').value;
+            const spreadsheetFromFront = document.getElementById('spreadsheetID').value;
 
             document.getElementById('loading').style.display = 'block';
 
             google.script.run
                 .withSuccessHandler(onSuccess)
                 .withFailureHandler(onFailure)
-                .processData(textareaValue, execDate, operator, spreadsheetUrlInput);
+                .processData(textareaValue, execDate, operator, spreadsheetFromFront);
         }
 
         function onSuccess(output) {
